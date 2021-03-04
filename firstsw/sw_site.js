@@ -1,24 +1,10 @@
-const  cacheName = 'v1';
+const  cacheName = 'v2';
 
-const cacheAssets = [
-    '/firstsw/index.html',
-    '/firstsw/about.html',
-    '/firstsw/css/style.css',
-    '/firstsw/js/index.js'
-]
 
 // intalling SW
 self.addEventListener('install',(e)=>{
     console.log('service worker : installed')
-
-    e.waitUntil(
-        caches.open(cacheName)
-            .then(cache=>{
-                console.log('SW: Caching Files')
-                cache.addAll(cacheAssets)
-            })
-            .then(()=>self.skipWaiting())
-    )
+    
 })
 // activating SW
 self.addEventListener('activate',(e)=>{
@@ -44,6 +30,18 @@ self.addEventListener("fetch",(e)=>{
     console.log("SW : Fetching")
 
     e.respondWith(
-        fetch(e.request).catch(()=>caches.match(e.request))
+        fetch(e.request)
+            .then(res=>{
+                // clone of response
+                const resClone = res.clone();
+
+                caches.open(cacheName)
+                .then(cache=>{
+                    cache.put(e.request,resClone)
+                })
+                return res;
+
+            })
+        .catch((err)=>caches.match(e.request).then(res=>res))
     )
 })  
